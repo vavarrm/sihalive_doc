@@ -1,28 +1,63 @@
+-- phpMyAdmin SQL Dump
+-- version 4.7.7
+-- https://www.phpmyadmin.net/
+--
+-- 主機: localhost
+-- 產生時間： 2018-02-19 10:47:35
+-- 伺服器版本: 5.7.19
+-- PHP 版本： 5.6.31
+
 SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
+
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
+--
+-- 資料庫： `sihalive`
+--
 CREATE DATABASE IF NOT EXISTS `sihalive` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 USE `sihalive`;
 
 DELIMITER $$
+--
+-- Procedure
+--
 DROP PROCEDURE IF EXISTS `get_serial_number`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `get_serial_number` (IN `sn_type` INT(20))  NO SQL
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_serial_number` (IN `sn_type` VARCHAR(20))  NO SQL
 BEGIN
-	SELECT @p0 ;
-    SELECT * FROM food WHERE f_id = sn_type  ;
-     SELECT * FROM food WHERE f_id=2 ;
- 
+  DECLARE number INT(11) DEFAULT 0;
+	DECLARE first_char CHAR(1) DEFAULT '';
+	
+  CASE  
+  WHEN sn_type = 'order'    THEN  SET first_char = 'O'; 
+  WHEN sn_type  ='coupons'  THEN SET first_char = 'C';  
+  ELSE SET  first_char = '';
+	END CASE;
+ IF first_char !='' THEN
+		SET  number = ( SELECT RIGHT(sn_number,11) FROM serial_number  AS sn WHERE DATE_FORMAT(add_datetime,'%Y%m%d') = DATE_FORMAT(NOW(),'%Y%m%d') AND sn.sn_type = sn_type ) ;
+	  SELECT CONCAT(first_char,DATE_FORMAT(NOW(),'%Y%m%d'),LPAD(IFNULL(number,1)+1,11,0)) AS new_serial_number ;
+		
+ELSE
+	  SELECT ''  AS  serial_number  ;
+END IF;
+
+
 END$$
 
 DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `admin_role`
+--
 
 DROP TABLE IF EXISTS `admin_role`;
 CREATE TABLE `admin_role` (
@@ -31,6 +66,12 @@ CREATE TABLE `admin_role` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `admin_role_permissions_link`
+--
+
 DROP TABLE IF EXISTS `admin_role_permissions_link`;
 CREATE TABLE `admin_role_permissions_link` (
   `apl_id` int(10) UNSIGNED NOT NULL,
@@ -38,6 +79,12 @@ CREATE TABLE `admin_role_permissions_link` (
   `pe_id` int(5) UNSIGNED DEFAULT NULL COMMENT 'permissions_id',
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `admin_user`
+--
 
 DROP TABLE IF EXISTS `admin_user`;
 CREATE TABLE `admin_user` (
@@ -49,6 +96,12 @@ CREATE TABLE `admin_user` (
   `ar_id` int(2) UNSIGNED DEFAULT NULL COMMENT 'admin_role_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `category`
+--
+
 DROP TABLE IF EXISTS `category`;
 CREATE TABLE `category` (
   `ca_id` int(11) UNSIGNED NOT NULL,
@@ -58,12 +111,22 @@ CREATE TABLE `category` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- 資料表的匯出資料 `category`
+--
+
 INSERT INTO `category` (`ca_id`, `ca_parents_id`, `ca_name`, `ca_name_en`, `add_datetime`) VALUES
 (1, 0, '寿司', 'Sushi', '2018-02-16 00:00:00'),
 (2, 0, '盒饭', 'BENTO', '2018-02-16 00:00:00'),
 (3, 0, '主食', 'Staple Food', '2018-02-16 00:00:00'),
 (4, 0, '蛋糕', 'Cake', '2018-02-16 00:00:00'),
 (5, 0, '套餐', 'Set', '2018-02-16 00:00:00');
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `ci_sessions`
+--
 
 DROP TABLE IF EXISTS `ci_sessions`;
 CREATE TABLE `ci_sessions` (
@@ -72,6 +135,10 @@ CREATE TABLE `ci_sessions` (
   `timestamp` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `data` blob NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- 資料表的匯出資料 `ci_sessions`
+--
 
 INSERT INTO `ci_sessions` (`id`, `ip_address`, `timestamp`, `data`) VALUES
 ('se4po4liblf1jmtr9rha2ph9ds0knj0d', '127.0.0.1', 1514285620, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531343139303037323b656e63727970745f757365725f646174617c733a3230343a2256546b35534451315a6e51305a325636625852365447564357454579656e46764d7a4e614e4573775747737a5130466962585579623278556432644552445a5653485a744d6d3579544730794d6d7832596e4e4a646b343151314e6c6358706e617a56524d6c63306544424a636c42494c316c4e526a464a64475657626d706c5745526a63585246517a4650524735715369394f556e4632646e63334e544230576d68714d454e72654570724d465243626c42535530644553486c305547466862335634575664525054303d223b),
@@ -218,7 +285,19 @@ INSERT INTO `ci_sessions` (`id`, `ip_address`, `timestamp`, `data`) VALUES
 ('5lb88m1q48ol9n95lus2j0ruhnlm1939', '127.0.0.1', 1518756329, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383735363332373b),
 ('5irkae0m5oome134edlh2spurgdalar7', '127.0.0.1', 1518767200, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383736373136353b),
 ('ucqh247j1k644c81avn7ui44n80jt2a3', '127.0.0.1', 1518767723, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383736373538333b),
-('sgm13m34que06k3qaupbogiv7gtgsktg', '127.0.0.1', 1518788353, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383738383331373b);
+('sgm13m34que06k3qaupbogiv7gtgsktg', '127.0.0.1', 1518788353, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383738383331373b),
+('ikto536mnmh3bqqua42r3g8mmenvd93s', '127.0.0.1', 1518969311, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383936393330373b),
+('u55rh3ub32m349i03jri7rklj34146dk', '127.0.0.1', 1518969994, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383936393731363b),
+('b4k6dbsga7ja19ok4hiahdou37m4rgqd', '127.0.0.1', 1518970634, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383937303538313b),
+('d82onhala8181qsfvebvss3d3pa4u8nu', '127.0.0.1', 1518970978, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383937303932363b),
+('g329knpvdualk48u74k9ds6i5a7vnp1v', '127.0.0.1', 1518971583, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383937313337363b),
+('dctve29l8dmvem6f5stpui9olms6rmbc', '127.0.0.1', 1518971867, 0x5f5f63695f6c6173745f726567656e65726174657c693a313531383937313639353b);
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `coupons`
+--
 
 DROP TABLE IF EXISTS `coupons`;
 CREATE TABLE `coupons` (
@@ -230,6 +309,12 @@ CREATE TABLE `coupons` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `o_id` char(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `delivery_process`
+--
 
 DROP TABLE IF EXISTS `delivery_process`;
 CREATE TABLE `delivery_process` (
@@ -243,6 +328,12 @@ CREATE TABLE `delivery_process` (
   `spend_time` int(11) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `driver`
+--
+
 DROP TABLE IF EXISTS `driver`;
 CREATE TABLE `driver` (
   `dr_id` int(11) UNSIGNED NOT NULL,
@@ -252,6 +343,12 @@ CREATE TABLE `driver` (
   `dr_work_time_start` time NOT NULL DEFAULT '09:00:00',
   `dr_work_time_end` time NOT NULL DEFAULT '21:00:00'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `food`
+--
 
 DROP TABLE IF EXISTS `food`;
 CREATE TABLE `food` (
@@ -270,6 +367,10 @@ CREATE TABLE `food` (
   `r_id` int(11) UNSIGNED DEFAULT NULL COMMENT 'restaurant_id',
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- 資料表的匯出資料 `food`
+--
 
 INSERT INTO `food` (`f_id`, `f_name`, `f_name_en`, `f_description`, `ca_id`, `f_status`, `f_large_price`, `f_medium_price`, `f_small_price`, `f_discount_price`, `f_order`, `f_label`, `r_id`, `add_datetime`) VALUES
 (2, '炸虾寿司卷', 'Ebi-ten Sushi', 'Tempura shrimp, vege, egg, Mayonese,sauce,', 1, 'sale_on', '3.00', '1.00', '1.00', '1.00', 0, '', NULL, '2018-02-16 00:00:00'),
@@ -298,6 +399,12 @@ INSERT INTO `food` (`f_id`, `f_name`, `f_name_en`, `f_description`, `ca_id`, `f_
 (25, 'TERIYAKI Sandwich', 'TERIYAKI Sandwich', 'Teriyaki chicken & egg', 5, 'sale_off', '2.50', '1.00', '1.00', '1.00', 0, '', NULL, '2018-02-16 00:00:00'),
 (26, 'Tonkatsu sandwich ', 'Tonkatsu sandwich ', 'Pork breadcrumbs ', 5, 'sale_off', '2.00', '1.00', '1.00', '1.00', 0, '', NULL, '2018-02-16 00:00:00');
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `food_category_link`
+--
+
 DROP TABLE IF EXISTS `food_category_link`;
 CREATE TABLE `food_category_link` (
   `fc_id` int(10) UNSIGNED NOT NULL,
@@ -305,6 +412,12 @@ CREATE TABLE `food_category_link` (
   `ca_id` int(11) UNSIGNED DEFAULT NULL,
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `food_set`
+--
 
 DROP TABLE IF EXISTS `food_set`;
 CREATE TABLE `food_set` (
@@ -314,6 +427,12 @@ CREATE TABLE `food_set` (
   `fs_child_f_id` int(11) UNSIGNED DEFAULT NULL,
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `order_detail`
+--
 
 DROP TABLE IF EXISTS `order_detail`;
 CREATE TABLE `order_detail` (
@@ -326,6 +445,12 @@ CREATE TABLE `order_detail` (
   `upd_datetime` datetime DEFAULT NULL,
   `od_is_set` enum('0','1') NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `order_list`
+--
 
 DROP TABLE IF EXISTS `order_list`;
 CREATE TABLE `order_list` (
@@ -340,6 +465,12 @@ CREATE TABLE `order_list` (
   `p_id` int(11) UNSIGNED DEFAULT NULL COMMENT 'position_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `permissions`
+--
+
 DROP TABLE IF EXISTS `permissions`;
 CREATE TABLE `permissions` (
   `pe_id` int(5) UNSIGNED NOT NULL,
@@ -349,6 +480,12 @@ CREATE TABLE `permissions` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `pe_parents_id` int(5) UNSIGNED NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `position`
+--
 
 DROP TABLE IF EXISTS `position`;
 CREATE TABLE `position` (
@@ -367,6 +504,10 @@ CREATE TABLE `position` (
   `u_id` int(11) UNSIGNED DEFAULT NULL COMMENT 'user_id',
   `r_id` int(11) UNSIGNED DEFAULT NULL COMMENT 'restaurant_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- 資料表的匯出資料 `position`
+--
 
 INSERT INTO `position` (`p_id`, `p_title`, `p_description`, `p_lat`, `p_lng`, `p_status`, `add_datetime`, `upd_datetime`, `p_open_time`, `p_close_time`, `p_address`, `p_type`, `u_id`, `r_id`) VALUES
 (1, '金獅', '金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅金獅', 10.6105995, 103.523685, 'open', '2018-02-17 00:00:00', NULL, '00:00:00', '24:00:00', NULL, 'system', NULL, NULL),
@@ -500,6 +641,12 @@ INSERT INTO `position` (`p_id`, `p_title`, `p_description`, `p_lat`, `p_lng`, `p
 (150, 'Yaduoli Casino', 'Yaduoli Casino', 10.608811, 103.524755, 'open', '2018-02-17 00:00:00', NULL, '00:00:00', '24:00:00', NULL, 'system', NULL, NULL),
 (151, 'Zana Beach Guesthouse', 'Zana Beach Guesthouse', 10.608388, 103.526109, 'open', '2018-02-17 00:00:00', NULL, '00:00:00', '24:00:00', NULL, 'system', NULL, NULL);
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `restaurant`
+--
+
 DROP TABLE IF EXISTS `restaurant`;
 CREATE TABLE `restaurant` (
   `r_id` int(11) UNSIGNED NOT NULL,
@@ -516,8 +663,18 @@ CREATE TABLE `restaurant` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- 資料表的匯出資料 `restaurant`
+--
+
 INSERT INTO `restaurant` (`r_id`, `r_name`, `r_name_en`, `r_description`, `r_description_en`, `r_open_start`, `r_open_end`, `r_open_day`, `r_lat`, `r_lng`, `r_address`, `add_datetime`) VALUES
 (1, 'happy cafe', NULL, '111', NULL, '09:00:00', '21:00:00', '', 0, 0, '111', '2018-02-16 23:29:47');
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `restaurant_category_link`
+--
 
 DROP TABLE IF EXISTS `restaurant_category_link`;
 CREATE TABLE `restaurant_category_link` (
@@ -527,12 +684,31 @@ CREATE TABLE `restaurant_category_link` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='restaurant classification';
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `serial_number`
+--
+
 DROP TABLE IF EXISTS `serial_number`;
 CREATE TABLE `serial_number` (
   `sn_number` char(20) NOT NULL,
   `sn_type` enum('order','coupons') NOT NULL,
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- 資料表的匯出資料 `serial_number`
+--
+
+INSERT INTO `serial_number` (`sn_number`, `sn_type`, `add_datetime`) VALUES
+('O2018021800000000001', 'order', '2018-02-18 22:49:54');
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `sms_log`
+--
 
 DROP TABLE IF EXISTS `sms_log`;
 CREATE TABLE `sms_log` (
@@ -545,6 +721,12 @@ CREATE TABLE `sms_log` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `user`
+--
+
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `u_id` int(11) UNSIGNED NOT NULL,
@@ -556,6 +738,12 @@ CREATE TABLE `user` (
   `u_status` enum('unlock','lock') NOT NULL DEFAULT 'unlock'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `user_points`
+--
+
 DROP TABLE IF EXISTS `user_points`;
 CREATE TABLE `user_points` (
   `up_id` int(11) UNSIGNED NOT NULL,
@@ -565,88 +753,148 @@ CREATE TABLE `user_points` (
   `add_datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- 已匯出資料表的索引
+--
 
+--
+-- 資料表索引 `admin_role`
+--
 ALTER TABLE `admin_role`
   ADD PRIMARY KEY (`ar_id`);
 
+--
+-- 資料表索引 `admin_role_permissions_link`
+--
 ALTER TABLE `admin_role_permissions_link`
   ADD PRIMARY KEY (`apl_id`),
   ADD KEY `fk_pemissions_id` (`pe_id`),
   ADD KEY `fk_admin_id` (`ar_id`);
 
+--
+-- 資料表索引 `admin_user`
+--
 ALTER TABLE `admin_user`
   ADD PRIMARY KEY (`ad_id`),
   ADD KEY `fk_admin_role_id` (`ar_id`);
 
+--
+-- 資料表索引 `category`
+--
 ALTER TABLE `category`
   ADD PRIMARY KEY (`ca_id`),
   ADD KEY `ca_parents_id` (`ca_parents_id`);
 
+--
+-- 資料表索引 `coupons`
+--
 ALTER TABLE `coupons`
   ADD PRIMARY KEY (`cp_id`),
   ADD KEY `fk_user_coupons` (`u_id`),
   ADD KEY `fk_order_coupons` (`o_id`);
 
+--
+-- 資料表索引 `delivery_process`
+--
 ALTER TABLE `delivery_process`
   ADD PRIMARY KEY (`dp_id`),
   ADD KEY `fk_driver_id` (`dr_id`),
   ADD KEY `fk_order_id` (`o_id`);
 
+--
+-- 資料表索引 `driver`
+--
 ALTER TABLE `driver`
   ADD PRIMARY KEY (`dr_id`);
 
+--
+-- 資料表索引 `food`
+--
 ALTER TABLE `food`
   ADD PRIMARY KEY (`f_id`),
   ADD KEY `f_r_id` (`r_id`),
   ADD KEY `food_fk_category` (`ca_id`);
 
+--
+-- 資料表索引 `food_category_link`
+--
 ALTER TABLE `food_category_link`
   ADD PRIMARY KEY (`fc_id`),
   ADD UNIQUE KEY `f_id` (`f_id`,`ca_id`),
   ADD UNIQUE KEY `f_id_2` (`f_id`,`ca_id`),
   ADD KEY `fk_category1` (`ca_id`);
 
+--
+-- 資料表索引 `food_set`
+--
 ALTER TABLE `food_set`
   ADD PRIMARY KEY (`fs_id`),
   ADD UNIQUE KEY `fs_parent_f_id` (`fs_parent_f_id`,`fs_child_f_id`,`fs_group_id`) USING BTREE,
   ADD UNIQUE KEY `fs_group_id` (`fs_group_id`,`fs_parent_f_id`,`fs_child_f_id`),
   ADD KEY `fk_food_id1` (`fs_child_f_id`);
 
+--
+-- 資料表索引 `order_detail`
+--
 ALTER TABLE `order_detail`
   ADD PRIMARY KEY (`o_id`,`od_item_index`),
   ADD KEY `od_f_id` (`f_id`);
 
+--
+-- 資料表索引 `order_list`
+--
 ALTER TABLE `order_list`
   ADD PRIMARY KEY (`o_id`),
   ADD KEY `fk_u_id` (`u_id`),
   ADD KEY `fk_status` (`o_status`),
   ADD KEY `fk_position` (`p_id`);
 
+--
+-- 資料表索引 `permissions`
+--
 ALTER TABLE `permissions`
   ADD PRIMARY KEY (`pe_id`);
 
+--
+-- 資料表索引 `position`
+--
 ALTER TABLE `position`
   ADD PRIMARY KEY (`p_id`),
   ADD KEY `fk_user_position` (`u_id`),
   ADD KEY `fk_restauranterd_position` (`r_id`);
 
+--
+-- 資料表索引 `restaurant`
+--
 ALTER TABLE `restaurant`
   ADD PRIMARY KEY (`r_id`),
   ADD UNIQUE KEY `r_name` (`r_name`);
 
+--
+-- 資料表索引 `restaurant_category_link`
+--
 ALTER TABLE `restaurant_category_link`
   ADD PRIMARY KEY (`rcl_id`),
   ADD KEY `fk_restaurant` (`rcl_r_id`),
   ADD KEY `fk_category` (`rcl_ca_id`);
 
+--
+-- 資料表索引 `serial_number`
+--
 ALTER TABLE `serial_number`
   ADD PRIMARY KEY (`sn_number`);
 
+--
+-- 資料表索引 `sms_log`
+--
 ALTER TABLE `sms_log`
   ADD PRIMARY KEY (`sl_id`),
   ADD KEY `sl_type_id` (`sl_type`),
   ADD KEY `fk_sms_user_id` (`u_id`);
 
+--
+-- 資料表索引 `user`
+--
 ALTER TABLE `user`
   ADD PRIMARY KEY (`u_id`),
   ADD UNIQUE KEY `fb_u_id` (`fb_u_id`),
@@ -654,110 +902,203 @@ ALTER TABLE `user`
   ADD KEY `fb_u_id_2` (`fb_u_id`),
   ADD KEY `u_account` (`u_account`);
 
+--
+-- 資料表索引 `user_points`
+--
 ALTER TABLE `user_points`
   ADD PRIMARY KEY (`up_id`),
   ADD KEY `fk_user_id` (`u_id`);
 
+--
+-- 在匯出的資料表使用 AUTO_INCREMENT
+--
 
+--
+-- 使用資料表 AUTO_INCREMENT `admin_role`
+--
 ALTER TABLE `admin_role`
   MODIFY `ar_id` int(2) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `admin_role_permissions_link`
+--
 ALTER TABLE `admin_role_permissions_link`
   MODIFY `apl_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `admin_user`
+--
 ALTER TABLE `admin_user`
   MODIFY `ad_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `category`
+--
 ALTER TABLE `category`
   MODIFY `ca_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
+--
+-- 使用資料表 AUTO_INCREMENT `delivery_process`
+--
 ALTER TABLE `delivery_process`
   MODIFY `dp_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `driver`
+--
 ALTER TABLE `driver`
   MODIFY `dr_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `food`
+--
 ALTER TABLE `food`
   MODIFY `f_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
+--
+-- 使用資料表 AUTO_INCREMENT `food_category_link`
+--
 ALTER TABLE `food_category_link`
   MODIFY `fc_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `food_set`
+--
 ALTER TABLE `food_set`
   MODIFY `fs_id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `permissions`
+--
 ALTER TABLE `permissions`
   MODIFY `pe_id` int(5) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `position`
+--
 ALTER TABLE `position`
   MODIFY `p_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=152;
 
+--
+-- 使用資料表 AUTO_INCREMENT `restaurant`
+--
 ALTER TABLE `restaurant`
   MODIFY `r_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
+--
+-- 使用資料表 AUTO_INCREMENT `restaurant_category_link`
+--
 ALTER TABLE `restaurant_category_link`
   MODIFY `rcl_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'auto_id';
 
+--
+-- 使用資料表 AUTO_INCREMENT `sms_log`
+--
 ALTER TABLE `sms_log`
   MODIFY `sl_id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `user`
+--
 ALTER TABLE `user`
   MODIFY `u_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 使用資料表 AUTO_INCREMENT `user_points`
+--
 ALTER TABLE `user_points`
   MODIFY `up_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- 已匯出資料表的限制(Constraint)
+--
 
+--
+-- 資料表的 Constraints `admin_role_permissions_link`
+--
 ALTER TABLE `admin_role_permissions_link`
   ADD CONSTRAINT `fk_admin_id` FOREIGN KEY (`ar_id`) REFERENCES `admin_role` (`ar_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_pemissions_id` FOREIGN KEY (`pe_id`) REFERENCES `permissions` (`pe_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `admin_user`
+--
 ALTER TABLE `admin_user`
   ADD CONSTRAINT `fk_admin_role_id` FOREIGN KEY (`ar_id`) REFERENCES `admin_role` (`ar_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `coupons`
+--
 ALTER TABLE `coupons`
   ADD CONSTRAINT `fk_order_coupons` FOREIGN KEY (`o_id`) REFERENCES `order_list` (`o_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_user_coupons` FOREIGN KEY (`u_id`) REFERENCES `user` (`u_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `delivery_process`
+--
 ALTER TABLE `delivery_process`
   ADD CONSTRAINT `fk_driver_id` FOREIGN KEY (`dr_id`) REFERENCES `driver` (`dr_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_order_id` FOREIGN KEY (`o_id`) REFERENCES `order_list` (`o_id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
+--
+-- 資料表的 Constraints `food`
+--
 ALTER TABLE `food`
   ADD CONSTRAINT `food_fk_category` FOREIGN KEY (`ca_id`) REFERENCES `category` (`ca_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `food_fk_restauranterd` FOREIGN KEY (`r_id`) REFERENCES `restaurant` (`r_id`) ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `food_category_link`
+--
 ALTER TABLE `food_category_link`
   ADD CONSTRAINT `fk_category1` FOREIGN KEY (`ca_id`) REFERENCES `category` (`ca_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_food` FOREIGN KEY (`f_id`) REFERENCES `food` (`f_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `food_set`
+--
 ALTER TABLE `food_set`
   ADD CONSTRAINT `fk_food_child_id` FOREIGN KEY (`fs_child_f_id`) REFERENCES `food` (`f_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_food_parent_id` FOREIGN KEY (`fs_parent_f_id`) REFERENCES `food` (`f_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `order_detail`
+--
 ALTER TABLE `order_detail`
   ADD CONSTRAINT `fk_food_order` FOREIGN KEY (`f_id`) REFERENCES `food` (`f_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_order_list` FOREIGN KEY (`o_id`) REFERENCES `order_list` (`o_id`) ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `order_list`
+--
 ALTER TABLE `order_list`
+  ADD CONSTRAINT `fk_order_serial_number` FOREIGN KEY (`o_id`) REFERENCES `serial_number` (`sn_number`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_position` FOREIGN KEY (`p_id`) REFERENCES `position` (`p_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_u_id` FOREIGN KEY (`u_id`) REFERENCES `user` (`u_id`) ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `position`
+--
 ALTER TABLE `position`
   ADD CONSTRAINT `fk_restauranterd_position` FOREIGN KEY (`r_id`) REFERENCES `restaurant` (`r_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_user_position` FOREIGN KEY (`u_id`) REFERENCES `user` (`u_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `restaurant_category_link`
+--
 ALTER TABLE `restaurant_category_link`
   ADD CONSTRAINT `fk_category` FOREIGN KEY (`rcl_ca_id`) REFERENCES `category` (`ca_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_restaurant` FOREIGN KEY (`rcl_r_id`) REFERENCES `restaurant` (`r_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `serial_number`
-  ADD CONSTRAINT `fk_serial_number_coupons_id` FOREIGN KEY (`sn_number`) REFERENCES `coupons` (`cp_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_serial_number_order_id` FOREIGN KEY (`sn_number`) REFERENCES `order_list` (`o_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
+--
+-- 資料表的 Constraints `sms_log`
+--
 ALTER TABLE `sms_log`
   ADD CONSTRAINT `fk_sms_user_id` FOREIGN KEY (`u_id`) REFERENCES `user` (`u_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
+--
+-- 資料表的 Constraints `user_points`
+--
 ALTER TABLE `user_points`
   ADD CONSTRAINT `fk_user_id` FOREIGN KEY (`u_id`) REFERENCES `user` (`u_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 SET FOREIGN_KEY_CHECKS=1;
